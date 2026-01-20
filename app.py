@@ -20,7 +20,7 @@ def home():
         "/": "App root",
         "/api/data": "Returns random data",
         "/api/slow": "Simulates slow requests",
-        "/heath": "Health check endpoint",
+        "/health": "Health check endpoint",
         "/metrics": "Prometheus metrics"
     }
     })

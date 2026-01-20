@@ -1,15 +1,15 @@
-version: '3.8'
-
 services:
   # Prometheus - metrics collection and storage
   prometheus:
-    image: prom/prometheus:latest
+    build:
+      context: ./docker/prometheus
+      dockerfile: Dockerfile
     container_name: prometheus
     ports:
       - "9090:9090"
     volumes:
-      - /opt/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - /var/lib/prometheus:/prometheus
+    # - /opt/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -19,7 +19,7 @@ services:
       - monitoring
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -68,8 +68,8 @@ services:
   # Custom Flask application
   flask-app:
     build:
-      context: ./app
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./docker/app/Dockerfile
     container_name: flask-app
     ports:
       - "5000:5000"

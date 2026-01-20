@@ -1,5 +1,3 @@
-LABEL authors="eduardc"
-
 FROM python:3.13-alpine AS builder
 
 WORKDIR /app
@@ -18,7 +16,7 @@ COPY --from=builder /opt/venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 COPY app.py .
 
-RUN useradd -m -u 1000 appuser && \
+RUN adduser -D -u 1000 appuser && \
     chown -R appuser:appuser /app
 
 USER appuser
