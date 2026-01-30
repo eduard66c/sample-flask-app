@@ -19,6 +19,8 @@ COPY app.py .
 RUN adduser -D -u 1000 appuser && \
     chown -R appuser:appuser /app
 
+RUN mkdir -p /var/tmp && chmod 777 /var/tmp
+
 USER appuser
 
 EXPOSE 5000
