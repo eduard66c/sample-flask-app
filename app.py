@@ -48,6 +48,8 @@ logging.getLogger('werkzeug._internal').setLevel(logging.WARNING)
 
 logger = logging.getLogger('app')
 
+logger.setLevel(logging.INFO)
+
 
 @app.errorhandler(404)
 def not_found(e):

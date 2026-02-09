@@ -1,5 +1,5 @@
 services:
-  # Prometheus - metrics collection and storage
+
   prometheus:
     build:
       context: ./docker/prometheus
@@ -8,7 +8,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-    # - /opt/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -24,7 +24,6 @@ services:
       timeout: 10s
       retries: 3
 
-  # Grafana - visualization and dashboards
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -47,7 +46,6 @@ services:
       timeout: 10s
       retries: 3
 
-  # Node Exporter - system metrics
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
@@ -73,6 +71,8 @@ services:
     container_name: flask-app
     ports:
       - "5000:5000"
+    volumes:
+      - shared-logs:/var/tmp
     networks:
       - monitoring
     restart: unless-stopped
@@ -87,7 +87,7 @@ services:
     ports:
       - "3100:3100"
     volumes:
-      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml
+      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml:Z
       - loki-data:/var/loki
     command:
       - "--config.file=/etc/loki/loki-config.yaml"
@@ -98,9 +98,11 @@ services:
   promtail:
     image: grafana/promtail:latest
     container_name: promtail
+    ports:
+      - "9080:9080"
     volumes:
-      - ./promtail:/etc/promtail
-      - /var/tmp:/var/tmp:ro
+      - ./promtail/promtail-config.yaml:/etc/promtail/promtail-config.yaml:Z
+      - shared-logs:/var/tmp:ro
       - /var/log:/var/log:ro
     command: "-config.file=/etc/promtail/promtail-config.yaml"
     networks:
@@ -121,3 +123,5 @@ volumes:
     name: grafana-data
   loki-data:
     name: loki-data
+  shared-logs:
+    name: shared-logs
