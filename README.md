@@ -1,40 +1,42 @@
-# Monitoring Stack with Docker Compose
+# Prometheus Monitoring stack
 
 **Status:** Work in Progress 🚧
 
-A production-style observability stack using Prometheus, Grafana, and Docker Compose. This project demonstrates infrastructure-as-code principles and modern monitoring practices.
+This project is based on a single-file Flask app with custom logging configured + the necessary components to gather its metrics and logs. 
 
-## Current Status
+The intent is to implement the stack using Docker Compose, K8s manifests, Helm charts, and AWS resources provisioned with Terraform.
 
-- ✅ Docker Compose configuration with Prometheus, Grafana, Node Exporter
-- ✅ Basic Prometheus scraping configuration
-- ✅ Custom Flask application with metrics
-- 🚧 Grafana dashboard configuration (in progress)
-- 🚧 Comprehensive documentation (in progress)
+
 
 ## Technologies
 
-- Docker & Docker Compose
+- Containerized deployments using docker-compose, K8s, Helm
 - Prometheus (metrics collection)
 - Grafana (visualization)
 - Node Exporter (system metrics)
 - Python Flask (application metrics)
 
 ## Quick Start
+
+Docker Compose:
 ```bash
 docker-compose up -d
+```
+Kubernetes:
+```bash
+cd ./kubernetes
+kubectl apply -f .
+kubectl port-forward service/grafana 3000:3000
 ```
 
 Access services:
 - Grafana: http://localhost:3000 (admin/admin)
-- Prometheus: http://localhost:9090
+- Prometheus: http://localhost:9090 (requires port-forward if using K8s setup)
 
 ## Next Steps
 
-- [ ] Add instrumented Flask application
-- [ ] Create custom Grafana dashboards
-- [ ] Add alerting rules
-- [ ] Complete documentation
+- [ ] Create Helm chart for the Flask service
+- [ ] Move the setup to a Cloud environment using Terraform
 
 ---
 
