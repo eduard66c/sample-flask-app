@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "flask-app.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "flask-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "flask-app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "flask-app.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+    {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+      # Flask Application Container
+      - name: flask-app
+        image: "{{ .Values.flaskApp.image.repository }}:{{ .Values.flaskApp.image.tag }}"
+        imagePullPolicy:
+          {{ .Values.flaskApp.image.pullPolicy }}
+          {{- with .Values.securityContext }}
+        securityContext:
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
+        ports:
+        - name: web
+          containerPort: {{ .Values.flaskApp.port }}
+          protocol: TCP
+        env:
+        {{- range $key, $value := .Values.flaskApp.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        volumeMounts:
+        - name: logs
+          mountPath: /var/tmp
+        {{- with .Values.flaskApp.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        {{- with .Values.flaskApp.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+        {{- with .Values.flaskApp.resources }}
+        resources:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+
+      {{- if .Values.promtail.enabled }}
+      # Promtail Sidecar Container
+      - name: promtail
+        image: "{{ .Values.promtail.image.repository }}:{{ .Values.promtail.image.tag }}"
+        imagePullPolicy: {{ .Values.promtail.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.promtail.port }}
+          protocol: TCP
+        args:
+          - "-config.file=/etc/promtail/promtail-config.yaml"
+        volumeMounts:
+        - name: promtail-config
+          mountPath: /etc/promtail
+        - name: positions
+          mountPath: /var/lib/promtail
+        - name: logs
+          mountPath: /var/tmp
+          readOnly: true
+        {{- with .Values.promtail.resources }}
+        resources:
+          {{- toYaml . | nindent 12 }}
+        {{- end }}
+      {{- end }}
+
+      volumes:
+      - name: logs
+        emptyDir: {}
+      - name: promtail-config
+        configMap:
+          name: {{ include "flask-app.fullname" . }}-promtail-config
+      - name: positions
+        emptyDir: {}
+      restartPolicy: Always
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,41 @@
+apiVersion: v2
+name: monitoring-stack
+description: Complete monitoring stack using existing Helm charts + custom Flask app
+type: application
+version: 1.0.0
+appVersion: "1.0"
+keywords:
+  - monitoring
+  - prometheus
+  - grafana
+  - loki
+  - flask
+maintainers:
+  - name: Eduard Constantinescu
+    email: eduard.constantinescu98@gmail.com
+
+# Dependencies on external Helm charts
+dependencies:
+  # Prometheus stack (includes Prometheus, Grafana, Node Exporter, etc.)
+  - name: kube-prometheus-stack
+    version: "57.0.0"
+    repository: "https://prometheus-community.github.io/helm-charts"
+    condition: kubePrometheusStack.enabled
+    tags:
+      - monitoring
+
+  # Loki stack
+  - name: loki-stack
+    version: "2.10.0"
+    repository: "https://grafana.github.io/helm-charts"
+    condition: lokiStack.enabled
+    tags:
+      - logging
+
+  # Flask app (local chart)
+  - name: flask-app
+    version: "1.0.0"
+    repository: "file://../flask-app"
+    condition: flaskApp.enabled
+    tags:
+      - app

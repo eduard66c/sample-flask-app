@@ -1,0 +1,155 @@
+# Monitoring Stack - Main values.yaml
+# This file configures the entire monitoring stack using Helm charts
+
+kubePrometheusStack:
+  enabled: true
+
+lokiStack:
+  enabled: true
+
+flaskApp:
+  enabled: true
+
+# KUBE-PROMETHEUS-STACK Configuration
+# Full docs: https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
+
+kubePrometheusStack:
+  prometheusOperator:
+    enabled: true
+
+  prometheus:
+    enabled: true
+    prometheusSpec:
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 10Gi
+
+      retention: 15d
+
+      serviceMonitorSelectorNilUsesHelmValues: false
+
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+        limits:
+          cpu: 500m
+          memory: 1Gi
+
+  grafana:
+    enabled: true
+    adminPassword: admin
+    persistence:
+      enabled: true
+      size: 5Gi
+
+    datasources:
+      datasources.yaml:
+        apiVersion: 1
+        datasources:
+          - name: Prometheus
+            type: prometheus
+            url: http://prometheus:9090
+            isDefault: true
+          - name: Loki
+            type: loki
+            url: http://loki:3100
+
+  nodeExporter:
+    enabled: true
+
+  kubeStateMetrics:
+    enabled: true
+
+  prometheus-node-exporter:
+    enabled: true
+
+  alertmanager:
+    enabled: false
+
+# LOKI-STACK Configuration
+# Full docs: https://github.com/grafana/helm-charts/tree/main/charts/loki-stack
+
+lokiStack:
+  loki:
+    enabled: true
+    persistence:
+      enabled: true
+      size: 10Gi
+
+    config:
+      auth_enabled: false
+
+      server:
+        http_listen_port: 3100
+        grpc_listen_port: 9096
+
+      common:
+        instance_addr: 127.0.0.1
+        path_prefix: /loki
+        storage:
+          filesystem:
+            chunks_directory: /loki/chunks
+            rules_directory: /loki/rules
+        replication_factor: 1
+        ring:
+          kvstore:
+            store: inmemory
+
+      schema_config:
+        configs:
+          - from: 2020-10-24
+            store: tsdb
+            object_store: filesystem
+            schema: v13
+            index:
+              prefix: index_
+              period: 24h
+
+      limits_config:
+        retention_period: 168h
+
+      compactor:
+        working_directory: /loki/compactor
+        compaction_interval: 10m
+        retention_enabled: true
+        retention_delete_delay: 2h
+        retention_delete_worker_count: 150
+        delete_request_store: filesystem
+
+  promtail:
+    enabled: false  # We're using Promtail sidecar instead
+
+  grafana:
+    enabled: false  # We already have Grafana from kube-prometheus-stack
+
+# FLASK-APP Configuration
+# Values passed to the flask-app sub-chart
+
+flaskApp:
+  release: flask-app
+
+  # Flask app image
+  flaskApp:
+    image:
+      repository: sample-flask-app-flask-app
+      tag: latest
+
+    env:
+      FLASK_ENV: production
+
+  # Promtail sidecar
+  promtail:
+    enabled: true
+    loki:
+      url: http://loki:3100/loki/api/v1/push
+
+  replicaCount: 1
+
+  service:
+    type: ClusterIP
+    port: 5000
