@@ -1,36 +1,40 @@
 # Monitoring Stack with Helm
 
-This directory contains a Helm-based setup for your monitoring stack using industry-standard Helm charts.
+This directory contains the necessary charts and values in order to deploy the project using Helm.
 
 ## Directory Structure
 
 ```
 helm/
 ├── monitoring-stack/          # Main umbrella chart
-│   ├── Chart.yaml            # Chart metadata and dependencies
-│   └── values.yaml           # Configuration for all components
-│
-└── flask-app/                # Custom Flask app chart
-    ├── Chart.yaml            # Chart metadata
-    ├── values.yaml           # Default values
-    └── templates/
-        ├── deployment.yaml   # Flask + Promtail sidecar
-        ├── service.yaml      # Kubernetes Service
-        ├── configmap.yaml    # Promtail config
-        └── _helpers.tpl      # Helm helpers
+│   ├── Chart.yaml         
+├── flask-app/                # Custom Flask app chart
+│   ├── Chart.yaml            # Chart metadata
+│   ├── values.yaml           # Default values
+│   └── templates/
+│       ├── deployment.yaml   # Flask + Promtail sidecar
+│       ├── service.yaml      # Kubernetes Service
+│       ├── configmap.yaml    # Promtail config
+│       └── _helpers.tpl      # Helm helpers
+├── values-loki.yaml          # Values for loki to be provided to the grafana/loki-stack chart
+├── values-prometheus         # Values to provide to the kube-prometheus-stack chart
 ```
 
-## What Each Chart Does
+## What Each Chart Contains
 
-### monitoring-stack (Umbrella Chart)
-- **kube-prometheus-stack**: Includes Prometheus, Grafana, Node Exporter, Kube State Metrics
-- **loki-stack**: Includes Loki
-- **flask-app**: Your custom Flask application with Promtail sidecar
+### kube-prometheus-stack: 
+- Prometheus, 
+- Grafana, 
+- Node Exporter,
+- Kube State Metrics
+
+### loki-stack:
+- Loki
 
 ### flask-app (Custom Chart)
-- Flask application deployment
-- Promtail as sidecar container
-- Service exposure
+- Flask application deployment,
+- Promtail as sidecar container,
+- Service exposure,
 - ConfigMap for Promtail configuration
 
 ## Prerequisites
@@ -54,55 +58,27 @@ helm repo add grafana https://grafana.github.io/helm-charts
 helm repo update
 ```
 
-### 2. Update Dependencies
-
-```bash
-cd helm/monitoring-stack
-helm dependency update
-```
-
-This downloads the external charts (kube-prometheus-stack, loki-stack) defined in Chart.yaml.
-
-### 3. Create Namespace
+### 2. Create Namespace
 
 ```bash
 kubectl create namespace monitoring
 ```
 
-### 4. Customize values.yaml
-
-Edit `helm/monitoring-stack/values.yaml`:
+### 3. Dry Run (Validate)
 
 ```bash
-# IMPORTANT: Update Flask image
-# Find the line:
-#   image:
-#     repository: flask-app  # CHANGE THIS
-# Replace with your actual image repository:
-#   image:
-#     repository: myregistry/my-flask-app
-```
-
-### 5. Dry Run (Validate)
-
-```bash
-cd helm/monitoring-stack
-helm install monitoring . --namespace monitoring --dry-run --debug
+cd sample-flask-app
+helm install flask-app helm/flask-app --namespace monitoring --dry-run --debug
 ```
 
 This shows you what will be deployed without actually installing it.
 
-### 6. Install the Stack
+### 4. Install the Stack
 
 ```bash
-cd helm/monitoring-stack
-helm install monitoring . --namespace monitoring
-```
-
-Or with custom values file:
-
-```bash
-helm install monitoring . --namespace monitoring -f values-production.yaml
+helm install loki grafana/loki-stack -f helm/values-loki.yaml -n monitoring
+helm install prometheus prometheus-community/kube-prometheus-stack -f helm/values-prometheus.yaml -n monitoring
+helm install flask-app helm/flask-app -n monitoring
 ```
 
 ### 7. Verify Installation
@@ -139,7 +115,7 @@ kubectl port-forward -n monitoring svc/monitoring-loki 3100:3100
 ```
 
 Then access:
-- **Grafana**: http://localhost:3000 (admin/admin)
+- **Grafana**: http://localhost:3000
 - **Prometheus**: http://localhost:9090
 - **Loki**: http://localhost:3100
 
@@ -343,11 +319,3 @@ helm install monitoring . --namespace monitoring -f values-production.yaml
 - **kube-prometheus-stack**: https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
 - **loki-stack**: https://github.com/grafana/helm-charts/tree/main/charts/loki-stack
 - **Helm Best Practices**: https://helm.sh/docs/chart_best_practices/
-
-## Next Steps
-
-1. Update `flask-app` image repository in `values.yaml`
-2. Run `helm dependency update`
-3. Run `helm install monitoring . --namespace monitoring`
-4. Access Grafana and add dashboards
-5. Create alerts in Prometheus/AlertManager (if enabled)

@@ -4,7 +4,7 @@
 
 This project is based on a single-file Flask app with custom logging configured + the necessary components to gather its metrics and logs. 
 
-The intent is to implement the stack using Docker Compose, K8s manifests, Helm charts, and AWS resources provisioned with Terraform.
+The intent is to implement the stack using Docker Compose, K8s manifests, Helm charts, and GCP resources provisioned with Terraform.
 
 
 
@@ -15,6 +15,7 @@ The intent is to implement the stack using Docker Compose, K8s manifests, Helm c
 - Grafana (visualization)
 - Node Exporter (system metrics)
 - Python Flask (application metrics)
+- Helm charts for packaging deployments
 
 ## Quick Start
 
@@ -28,6 +29,12 @@ cd ./kubernetes
 kubectl apply -f .
 kubectl port-forward service/grafana 3000:3000
 ```
+Helm:
+```bash
+helm install loki grafana/loki-stack -f helm/values-loki.yaml -n monitoring
+helm install prometheus prometheus-community/kube-prometheus-stack -f helm/values-prometheus.yaml -n monitoring
+helm install flask-app helm/flask-app -n monitoring
+```
 
 Access services:
 - Grafana: http://localhost:3000 (admin/admin)
@@ -35,7 +42,6 @@ Access services:
 
 ## Next Steps
 
-- [ ] Create Helm chart for the Flask service
 - [ ] Move the setup to a Cloud environment using Terraform
 
 ---
