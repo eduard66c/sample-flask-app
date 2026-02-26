@@ -33,3 +33,14 @@ Thumbs.db
 
 # Docker
 *.log
+
+#Terraform
+terraform/gcp-monitoring/terraform.tfvars
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+*.tfvars
+*.tfvars.json
+!example.tfvars
