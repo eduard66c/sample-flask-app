@@ -28,6 +28,8 @@ resource "google_container_cluster" "monitoring_cluster" {
 
   # We can't use the default cluster logging for our example cluster
   logging_service = "logging.googleapis.com/kubernetes"
+
+  deletion_protection = false
 }
 
 # Separately Managed Node Pool
